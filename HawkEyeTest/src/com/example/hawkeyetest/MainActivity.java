@@ -1,5 +1,6 @@
 package com.example.hawkeyetest;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 
 import android.content.Intent;
@@ -50,43 +51,46 @@ public class MainActivity extends ActionBarActivity {
 	    }
 	}
 	
+	/**
+	 * Called when the video recording is complete. Gets the recorded
+	 * video as a Uri, gets the real path from the Uri, initiliazes a
+	 * mediametadataretriever, sets the video's path as its data
+	 * source, finds the videos duration, sets the fps and extracts
+	 * each frame of the video as a Bitmap (collected in an ArrayList
+	 * Prints the memory address of each bitmap along with the frame
+	 * number.
+	 */
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		//Log.i("Video Recording", "Entered the onActivityResult method");
 		if (requestCode == REQUEST_VIDEO_CAPTURE && resultCode == RESULT_OK) {
-	        //Log.i("Video Recording", "Entered the 'if' block");
 	    	Uri videoUri = data.getData();
-	    	//Log.i("Video Recording", "Received the intent data");
 	        MediaMetadataRetriever mRetriever = new MediaMetadataRetriever();
-	        //Log.i("Video Recording", "Initialised data retriever");
 	        String videoPath = getRealPathFromURI(videoUri);
-	        //Log.i("Video Recording", videoPath);
 	        mRetriever.setDataSource(videoPath);
 	        Log.i("Video Recording", "Set retriever's data source");
 	        
-	        //ArrayList<Bitmap> bArray = new ArrayList<Bitmap>();
-	        //Log.i("Video Recording", "Initiliased bitmap array");
-	        
-	        String durata = mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-	        int durata_millisec = Integer.parseInt(durata);
-	        int durata_video_micros = durata_millisec * 1000; 
-	        int durata_secondi = durata_millisec / 1000; 
-	        String bitrate = mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE);    
+	        String duration = mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+	        int duration_ms = Integer.parseInt(duration);
 	        int fps = 10;
-	        int numeroFrameCaptured = fps * durata_secondi;
 	        ArrayList<Bitmap> frames = new ArrayList<Bitmap>();
 	        Bitmap bmFrame;
-	        double totalFotogramas = durata_millisec/1000*fps; //video duration(micro seg)/1000s*fotogramas/s
+	        double totalFrames = duration_ms/1000*fps;
+	        ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-	        for(int i = 0; i < totalFotogramas; i++){
-	        bmFrame = mRetriever.getFrameAtTime(100000*i , MediaMetadataRetriever.OPTION_CLOSEST);
-	        frames.add(bmFrame);
+	        for(int i = 0; i < totalFrames; i++) {
+	        	bmFrame = mRetriever.getFrameAtTime(100000*i , MediaMetadataRetriever.OPTION_CLOSEST);
+	        	frames.add(bmFrame);
+	        	Log.i("Frame " + i + " :", bmFrame.toString());
 	        }
-	        Log.i("Bitmap array values", frames.toString());
 	        Log.i("Bitmap array size", String.valueOf(frames.size()));
 	    }
 	}
 	
+	/**
+	 * Returns the real path of a video given the Uri.
+	 * @param contentUri
+	 * @return the real path
+	 */
 	public String getRealPathFromURI(Uri contentUri) {
 	    String[] proj = { MediaStore.Images.Media.DATA };
 	    Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
